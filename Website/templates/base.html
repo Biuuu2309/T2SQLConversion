@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat GPT UI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            background-color: #f8f9fa;
+        }
+        .container-fluid {
+            display: flex;
+            height: 100vh;
+            padding: 0;
+        }
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #303030;
+        }
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            padding-left: 100px;
+            padding-right: 100px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        .user-message {
+            background: #0d6efd;
+            color: white;
+            align-self: flex-end;
+        }
+        .bot-message {
+            background: #e9ecef;
+            color: black;
+            align-self: flex-start;
+        }
+        .input-group {
+            padding: 10px;
+            padding-left: 20%;
+            padding-right: 20%;
+        }
+        .form-control {
+          border: var(--bs-border-width) solid #dee2e600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="chat-container">
+            <h4 style="padding-top: 20px; padding-bottom: 20px; padding-left: 50px; color: white; background: #232323">Basic text to SQL conversion</h4>
+            <div class="chat-box d-flex flex-column" id="chatBox"></div>
+            <div class="input-group">
+              <div style="padding: 30px; background: #454545; width: 100%; display: flex; border-radius: 15px;">
+                <input type="text" id="userInput" class="form-control" placeholder="Nhập tin nhắn..." onkeypress="handleKeyPress(event)">
+              </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            let userInput = document.getElementById("userInput");
+            let chatBox = document.getElementById("chatBox");
+            let userMessage = userInput.value.trim();
+            
+            if (userMessage !== "") {
+                // Hiển thị tin nhắn người dùng trên UI
+                let userMsgDiv = document.createElement("div");
+                userMsgDiv.className = "message user-message align-self-end";
+                userMsgDiv.innerText = userMessage;
+                chatBox.appendChild(userMsgDiv);
+                userInput.value = "";
+                chatBox.scrollTop = chatBox.scrollHeight;
+    
+                // Gửi request đến API Flask
+                try {
+                    let response = await fetch("http://127.0.0.1:5000/generate_sql", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ question: userMessage })
+                    });
+    
+                    let data = await response.json();
+    
+                    // Hiển thị phản hồi từ mô hình
+                    let botMsgDiv = document.createElement("div");
+                    botMsgDiv.className = "message bot-message align-self-start bg-light";
+                    botMsgDiv.innerText = data.sql_query || "Lỗi: Không thể tạo câu SQL.";
+                    chatBox.appendChild(botMsgDiv);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                } catch (error) {
+                    console.error("Lỗi gửi yêu cầu:", error);
+                }
+            }
+        }
+    
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        }
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,60 @@
+{% extends "base.html" %} 
+{% block title %} Changed {% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="chat-container">
+        <h4 style="padding-top: 20px; padding-bottom: 20px; padding-left: 50px; color: white; background: #232323">Basic text to SQL conversion</h4>
+        <div class="chat-box d-flex flex-column" id="chatBox"></div>
+        <div class="input-group">
+            <div style="padding: 30px; background: #454545; width: 100%; display: flex; border-radius: 15px;">
+                <input type="text" id="userInput" class="form-control" placeholder="Nhập tin nhắn..." onkeypress="handleKeyPress(event)">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function sendMessage() {
+        let userInput = document.getElementById("userInput");
+        let chatBox = document.getElementById("chatBox");
+        let userMessage = userInput.value.trim();
+        
+        if (userMessage !== "") {
+            // Hiển thị tin nhắn người dùng trên UI
+            let userMsgDiv = document.createElement("div");
+            userMsgDiv.className = "message user-message align-self-end";
+            userMsgDiv.innerText = userMessage;
+            chatBox.appendChild(userMsgDiv);
+            userInput.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Gửi request đến API Flask
+            try {
+                let response = await fetch("http://127.0.0.1:5000/generate_sql", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question: userMessage })
+                });
+
+                let data = await response.json();
+
+                // Hiển thị phản hồi từ mô hình
+                let botMsgDiv = document.createElement("div");
+                botMsgDiv.className = "message bot-message align-self-start bg-light";
+                botMsgDiv.innerText = data.sql_query || "Lỗi: Không thể tạo câu SQL.";
+                chatBox.appendChild(botMsgDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } catch (error) {
+                console.error("Lỗi gửi yêu cầu:", error);
+            }
+        }
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === "Enter") {
+            sendMessage();
+        }
+    }
+</script>
+{% endblock %}
